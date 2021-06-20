@@ -747,10 +747,13 @@ type iconv_t = *mut c_void;
 // On FreeBSD, link with GNU libiconv; the iconv implementation in libc doesn't support //TRANSLIT
 // and WCHAR_T. This is also why we change the symbol names from "iconv" to "libiconv" below.
 #[cfg_attr(target_os = "freebsd", link(name = "iconv"))]
+#[cfg_attr(target_os = "openbsd", link(name = "iconv"))]
 extern "C" {
     #[cfg_attr(target_os = "freebsd", link_name = "libiconv_open")]
+    #[cfg_attr(target_os = "openbsd", link_name = "libiconv_open")]
     pub fn iconv_open(tocode: *const c_char, fromcode: *const c_char) -> iconv_t;
     #[cfg_attr(target_os = "freebsd", link_name = "libiconv")]
+    #[cfg_attr(target_os = "openbsd", link_name = "libiconv")]
     pub fn iconv(
         cd: iconv_t,
         inbuf: *mut *mut c_char,
@@ -759,6 +762,7 @@ extern "C" {
         outbytesleft: *mut size_t,
     ) -> size_t;
     #[cfg_attr(target_os = "freebsd", link_name = "libiconv_close")]
+    #[cfg_attr(target_os = "openbsd", link_name = "libiconv_close")]
     pub fn iconv_close(cd: iconv_t) -> c_int;
 }
 
@@ -1574,11 +1578,11 @@ mod tests {
         let mode: u32 = 0o700;
         let tmp_dir = TempDir::new().unwrap();
         let path = tmp_dir.path().join("parent/dir");
-        assert_eq!(path.exists(), false);
+        assert!(!path.exists());
 
         let result = mkdir_parents(&path, mode);
         assert!(result.is_ok());
-        assert_eq!(path.exists(), true);
+        assert!(path.exists());
 
         let file_type_mask = 0o7777;
         let metadata = fs::metadata(&path).unwrap();
